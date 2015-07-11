@@ -1,0 +1,65 @@
+//This Proxy delivers requests from a Client to a Server (in the form of an URL),
+//and responses from a Server back to the Client (consisting of the content of 
+//the requested URL), allowing them to communicate without having to be connected 
+//directly. The Proxy continues to take requests from the Client until the command 
+//END PROGRAM is sent from the Client, after which the Proxy tells the Server that 
+//the Client has ended the program and closes itself.
+
+import java.net.*;
+import java.io.*;
+
+public class Proxy {
+
+	public static void main (String[] args) throws Exception{
+	//a Proxy object is created and begins running
+    Proxy serv = new Proxy();
+    serv.run();
+	}
+
+	//the run method is responsible for connecting to the Client and the Server, and
+	//sending requests from the Client to the Server, as well as responses from the 
+	//Server back to the Client.
+    public void run() throws Exception{
+    //Proxy first listens for Client connection and accepts it
+    ServerSocket ss = new ServerSocket(7777);
+    //a socket is created that connects to the Client
+    Socket sock = ss.accept();
+
+    //input and output streams to and from Client
+    InputStreamReader ir = new InputStreamReader(sock.getInputStream());
+    BufferedReader br = new BufferedReader(ir);
+    PrintStream psToClient = new PrintStream(sock.getOutputStream());
+
+    String message = "";
+    
+    //a socket is created that connects to the Server program
+    Socket sck = new Socket("localhost", 8888);
+    //input and output streams to and from Server
+    PrintStream ps = new PrintStream(sck.getOutputStream());
+    InputStreamReader irFromServer = new InputStreamReader(sck.getInputStream());
+    BufferedReader brFromServer = new BufferedReader(irFromServer);
+
+    //passes message from Client to Server, passes response from Server back to Client
+    while(true){
+    message = br.readLine();
+    //sends message from Client to Server
+    ps.println(message);
+    //if Client ends program, end program as well 
+    if(message.equals("END PROGRAM"))break;
+    System.out.println("Client wants me to tell Server he wants the content of: " + message);
+    String inputLine;
+    //continues reading from buffer until response is fully received
+    	while(!(inputLine = brFromServer.readLine()).equals("FINISHED SENDING CONTENT")){
+    		psToClient.println(inputLine);
+    		System.out.println(inputLine);
+    	}
+    System.out.println("DONE");
+    psToClient.println("FINISHED SENDING CONTENT");
+    }
+    //exit while loop, close sockets, end program
+    sock.close();
+    ss.close();
+    sck.close();
+    }
+
+}
