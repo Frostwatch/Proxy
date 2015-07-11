@@ -1,0 +1,74 @@
+//This Server takes requests from a Client via a Proxy and sends an appropriate response
+//back to the Client via the Proxy. The requests arrive in the form of a String, which the
+//Server then determines if the String is a valid URL request. If the request is not an URL
+//or the IP of the requested URL cannot be found, the Server returns an error message, 
+//if the request is valid, then the Server returns the content of the URL. The Server continues
+//to take requests from the Client via the Proxy until it receives an END PROGRAM command, 
+//after which the Server closes.
+
+import java.net.*;
+import java.io.*;
+
+public class Server {
+
+    public static void main (String[] args) throws Exception{
+    //a Server object is created and begins running
+    Server serv = new Server();
+    serv.run();
+    }
+
+    //the run method is responsible for connecting to the Proxy, taking requests and checking
+    //their validity, and sending back the correct response to the Proxy, where it is sent to the Client
+    public void run() throws Exception{
+    //Server first listens for Proxy connection and accepts it
+    ServerSocket ss = new ServerSocket(8888);
+    //a socket is created that connects to the Proxy
+    Socket sock = ss.accept();
+
+    //input and output streams to and from Proxy
+    InputStreamReader ir = new InputStreamReader(sock.getInputStream());
+    BufferedReader br = new BufferedReader(ir);
+    PrintStream psToProxy = new PrintStream(sock.getOutputStream());
+
+    String request = "";
+    
+    //retrieves content from requested URL and sends back to Proxy
+    while(true){
+    	request = br.readLine();//reads message from Client send via Proxy
+    	if(request.equals("END PROGRAM")) break;//if Client ends program, end program as well 
+    	System.out.println("Proxy told me Client wants the content from: " + request);
+    
+    	//makes URL object using String value from Client
+    	try{
+    		URL url = new URL(request); 		
+    		BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
+
+    		//sends URL content back to Client, via Proxy
+    		String inputLine;
+    		while ((inputLine = in.readLine()) != null){
+    			psToProxy.println(inputLine);
+    			//psToProxy.flush();
+    			System.out.println(inputLine);
+    		}
+        	System.out.println("DONE");
+        	//when content is finished being sent, send message signalling end of content
+        	psToProxy.println("FINISHED SENDING CONTENT");
+        	in.close();
+    	}
+    	//catches error caused by inputting a request that is not an URL
+    	catch(MalformedURLException e){
+    		psToProxy.println("Error, " + request + " was an invalid request, try another URL request.");
+    		psToProxy.println("FINISHED SENDING CONTENT");
+        }
+    	//catches error caused by inputting an URL that does not exist, such as 404
+    	catch (java.net.UnknownHostException e) {
+    		psToProxy.println("Error, unknown host, IP address of " + request + " could not be determined.");
+    		psToProxy.println("FINISHED SENDING CONTENT");
+    	}
+    }
+    //exit while loop, close sockets, end program
+    sock.close();
+    ss.close();
+    }
+
+}
