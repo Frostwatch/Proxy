@@ -1,0 +1,55 @@
+//This Client sends requests to a Server in the form of URLs
+//inputed by the user via keyboard, and outputs the response of the Server
+//in the form of the URL's content, such as the HTML code of a web page.
+//The Client and Server do not directly communicate, instead using a Proxy
+//that passes messages between the Client and the Server.
+
+import java.net.*;
+import java.io.*;
+import java.util.*;
+
+public class Client {
+
+public static void main(String[] args) throws Exception{
+	//a Client object is created and begins running
+    Client serv = new Client();
+    serv.run();
+    }
+
+	//the run method for the Client class is responsible for creating a link with the Proxy,
+	//sending requests to the Server via the Proxy, receiving the Server's response
+	//via the Proxy, and ending the program with the END PROGRAM command
+    public void run() throws Exception{
+    //a socket is created that connects to the Proxy program
+    Socket sock = new Socket("localhost", 7777);
+    //output stream to the Proxy
+    PrintStream ps = new PrintStream(sock.getOutputStream());
+    //input stream and buffered reader for receiving messages from Proxy 
+    InputStreamReader ir = new InputStreamReader(sock.getInputStream());
+    BufferedReader br = new BufferedReader(ir);
+    
+  //requests are inputed via keyboard by the user.
+    Scanner scanner = new Scanner(System.in);
+    String request;
+    
+    //user types in an URL request, outputs content of URL
+    while(true){
+    	System.out.println("Type in an URL to request content from Server via Proxy.");
+    	request = scanner.nextLine();//get requested URL
+    	ps.println(request);//request is sent to Proxy
+    	if(request.equals("END PROGRAM"))break;//exit program if user types in END PROGRAM
+    	String inputLine;
+    	//continues reading from buffer until response is fully received
+    	while(!(inputLine = br.readLine()).equals("FINISHED SENDING CONTENT")){
+    		System.out.println(inputLine);
+    	}
+    System.out.println("SERVER RESPONSE FOR " + request + " RETRIEVED");
+    System.out.println(" ");
+    }
+    //exit while loop, close socket and scanner, end program
+    System.out.println("PROGRAM ENDED");
+    sock.close();
+    scanner.close();
+    }
+
+}
